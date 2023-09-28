@@ -1,35 +1,68 @@
 import { data } from "./dumy_database.js";
+import { user_input } from "./user_input.js";
 import inquirer from "inquirer";
 import PromptSync from "prompt-sync";
 const prompt = PromptSync();
-// const input_1: string = prompt(`Enter Account No: `);
-// const input_2: string = prompt(`Enter your PIN: `)
-let user_input = await inquirer.prompt([
-    {
-        name: "account_no",
-        type: "input",
-        message: "Enter your Account No: ",
-    },
-    {
-        name: "pin",
-        type: "input",
-        message: "Enter your PIN: ",
+async function operation() {
+    let amount_found = false;
+    for (const $data of data) {
+        if ($data.account_number === user_input.account_no && $data.$pin === user_input.pin) {
+            amount_found = true;
+            let features = await inquirer.prompt([
+                {
+                    name: "choices",
+                    type: "rawlist",
+                    message: "Select one choice which you want: ",
+                    choices: ["Total Balance", "Withdraw", "Deposit", "Transaction History", "Change PIN", "Exit"]
+                }
+            ]);
+            if (features.choices === "Total Balance") {
+                console.log(`Total Balance: ${$data.balance}`);
+                console.log(features);
+            }
+            else if (features.choices === "Withdraw") {
+                let $withdraw = parseInt(prompt(`Enter amount for withdraw: `));
+                if ($withdraw <= $data.balance) {
+                    console.log(`Rs ${$withdraw} withdrawn, Rs ${$data.balance - $withdraw} is left`);
+                    $data.transactions.push(`Withdraw Amount : ${$withdraw}`);
+                    await operation();
+                }
+                else {
+                    console.log(`Your Balance is ${$data.balance} less than your entered Amount`);
+                }
+            }
+            else if (features.choices === "Deposit") {
+                let $deposit = parseInt(prompt(`Enter amount for Deposit: `));
+                let $deposit_amount = $deposit + $data.balance;
+                console.log(`Now your amount is ${$deposit_amount}`);
+                $data.transactions.push(`Deposit Amount : ${$deposit}`);
+                await operation();
+            }
+            else if (features.choices === "Transaction History") {
+                console.log(`Transaction History : ${$data.transactions}`);
+            }
+            else if (features.choices === "Change PIN") {
+                let user_input_1 = prompt(`Enter your old PIN: `);
+                if (user_input_1 === $data.$pin) {
+                    let user_input_2 = prompt(`Enter new PIN: `);
+                    $data.$pin = user_input_2;
+                    console.log(`Your PIN is changed Successfully! `);
+                    $data.transactions.push(`PIN changed : ${$data.$pin}`);
+                    await operation();
+                }
+                else {
+                    console.log(`Invalid! Enter valid PIN`);
+                }
+            }
+            else if (features.choices === "Exit") {
+                console.log(`Good Bye`);
+                process.exit(0);
+            }
+        }
     }
-]);
-function data_find() {
-    let $data = data.find((element) => element.account_number === user_input.account_no && element.pin === user_input.pin);
-    return $data;
+    if (!amount_found) {
+        console.log('Invalid! Please enter valid Account No and PIN');
+    }
 }
-let data_1 = data_find();
-console.log(data_1);
-// let features = await inquirer.prompt([
-// {
-//     name:"choices",
-//     type: "rawlist",
-//     message: "Select one choice which you want: ",
-//     choices: ["Total Balance","Withdraw","Deposit","Transaction History","Change PIN","Exit"]
-// } 
-// ]) 
-// if(features.choices === "Total Balance") {
-//     return (data[]) 
-// }
+let abc1 = await operation();
+// console.log(abc1)
